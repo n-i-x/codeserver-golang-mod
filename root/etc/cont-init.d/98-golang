@@ -1,0 +1,23 @@
+#!/usr/bin/with-contenv bash
+
+url="$(curl -s https://golang.org/dl/ | grep -oP 'https:\/\/dl\.google\.com\/go\/go([0-9\.]+)\.linux-amd64\.tar\.gz' | head -n 1 )"
+GO_LATEST="$(echo $url | grep -oP 'go[0-9\.]+' | grep -oP '[0-9\.]+' | head -c -2 )"
+echo "Latest Go for AMD64: ${GO_LATEST}"
+
+GO_VERSION="${GO_VERSION:-$GO_LATEST}"
+
+echo "**** installing golang ${GO_VERSION} ****"
+echo '**** set $GO_VERSION to install a specific version ****'
+
+if [[ -d "/usr/local/go" ]]; then
+    curr_version=$(cat /usr/local/go/VERSION)
+    if [[ "${curr_version}" == "go${GO_VERSION}" ]]; then
+        echo "**** golang ${GO_VERSION} already installed ****"
+        exit 0
+    fi
+    echo "**** golang ${curr_version} installed. Removing. ****"
+    rm /usr/local/go
+fi
+
+curl -fsSL https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz | tar -C /usr/local -xz
+export PATH=$PATH:/usr/local/go/bin
