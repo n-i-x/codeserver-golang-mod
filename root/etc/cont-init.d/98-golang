@@ -13,6 +13,9 @@ if [[ -d "/usr/local/go" ]]; then
     curr_version=$(cat /usr/local/go/VERSION)
     if [[ "${curr_version}" == "go${GO_VERSION}" ]]; then
         echo "**** golang ${GO_VERSION} already installed ****"
+        if [[ $PATH != *"/usr/local/go"* ]]; then
+            export PATH=$PATH:/usr/local/go/bin
+        fi
         exit 0
     fi
     echo "**** golang ${curr_version} installed. Removing. ****"
