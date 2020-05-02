@@ -1,0 +1,37 @@
+os: linux
+
+language: shell
+
+branches:
+  only:
+    - code-server-golang
+
+services:
+  - docker
+
+env:
+  global:
+    - DOCKERHUB="linuxserver/mods"
+    - BASEIMAGE="code-server"
+    - MODNAME="golang"
+
+jobs:
+  include:
+    - stage: PR-BuildImage
+      if: (type IN (pull_request))
+      script:
+        # Build image
+        - docker build --no-cache -t ${DOCKERHUB}:${BASEIMAGE}-${MODNAME}-${TRAVIS_COMMIT} .
+    - stage: BuildImage
+      if: (NOT (type IN (pull_request)))
+      script:
+        # Set version
+        - GO_VERSION=$(curl -sX GET https://golang.org/dl/ | grep -o '<span.*>.*linux-amd64.*</span>' | grep -oP '\d+\.\d+\.?\d+?')
+        # Build image
+        - docker build --no-cache --build-arg GO_VERSION=${GO_VERSION} -t ${DOCKERHUB}:${BASEIMAGE}-${MODNAME}-${GO_VERSION}-${TRAVIS_COMMIT} .
+        - docker tag ${DOCKERHUB}:${BASEIMAGE}-${MODNAME}-${GO_VERSION}-${TRAVIS_COMMIT} ${DOCKERHUB}:${BASEIMAGE}-${MODNAME}
+        # Login to DockerHub
+        - echo $DOCKERPASS | docker login -u $DOCKERUSER --password-stdin
+        # Push all of the tags
+        - docker push ${DOCKERHUB}:${BASEIMAGE}-${MODNAME}-${GO_VERSION}-${TRAVIS_COMMIT}
+        - docker push ${DOCKERHUB}:${BASEIMAGE}-${MODNAME}
